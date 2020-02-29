@@ -1,0 +1,13 @@
+[
+  {
+    "id": "edit",
+    "children": [
+      {
+        "id": "wrap"
+      },
+      {
+        "command": "straight_quotes"
+      }
+    ]
+  }
+]
