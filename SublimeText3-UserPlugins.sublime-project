@@ -1,0 +1,22 @@
+{
+	"folders": [
+		{
+			"path": ".",
+			"folder_exclude_patterns": [
+				".git",
+				".github",
+				"__pycache__",
+				"NormalizeOnSave/__pycache__"
+			],
+			"file_exclude_patterns": [
+				"*.pyc",
+				"*.pyo",
+				"*.zip",
+				"*.log",
+				"*.tmp",
+				"*.bak",
+				"*.sublime-workspace"
+			]
+		}
+	]
+}
