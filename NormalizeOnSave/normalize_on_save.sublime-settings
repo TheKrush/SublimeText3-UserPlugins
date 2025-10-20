@@ -2,5 +2,6 @@
     "file_extensions": [".md", ".txt", ".story", ".wiki", ".ps1", ".py", ".js", ".cpp"],
     "flatten_pretty_punctuation": false,
     "strip_invisible_chars": true,
-    "normalize_spacing": false
+    "normalize_spacing": false,
+    "debug_log": false,
 }
