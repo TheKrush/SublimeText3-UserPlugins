@@ -2,8 +2,10 @@ import sublime
 import sublime_plugin
 import re
 
-# --- File types that should trigger normalization ------------------
-NORMALIZE_EXTS = (".txt", ".md", ".rst", ".html")
+# --- Fallback file types if no "file_extensions" provided -----------
+NORMALIZE_EXTS_DEFAULT = (".txt", ".md", ".rst", ".html", ".story", ".wiki",
+                          ".ps1", ".bat", ".cmd", ".py", ".js", ".cpp", ".h",
+                          ".ini", ".cfg", ".json", ".xml", ".css", ".sh")
 
 # --- Invisible / control-like characters ---------------------------
 REPLACEMENTS_INVISIBLE = [
@@ -35,16 +37,48 @@ DEFAULT_SETTINGS = {
     "flatten_pretty_punctuation": False,
     "strip_invisible_chars": True,
     "normalize_spacing": True,
+    # Optional: let users control trigger extensions
+    # (if absent, we fall back to NORMALIZE_EXTS_DEFAULT)
+    # "file_extensions": [".txt", ".md"]
+}
+
+# --- Per-extension override profiles (BASELINES) -------------------
+# NOTE: User settings now override these.
+EXTENSION_PROFILES = {
+    (".ps1", ".bat", ".cmd", ".py", ".js", ".cpp", ".h",
+     ".ini", ".cfg", ".json", ".xml", ".html", ".css", ".sh"): {
+        "flatten_pretty_punctuation": True,
+        "strip_invisible_chars": True,
+        "normalize_spacing": True,
+    },
+    (".md", ".txt", ".story", ".wiki"): {
+        "flatten_pretty_punctuation": False,
+        "strip_invisible_chars": True,
+        "normalize_spacing": True,
+    },
 }
 
 # ===================================================================
 class NormalizeOnSave(sublime_plugin.EventListener):
     def on_pre_save(self, view):
         path = (view.file_name() or "").lower()
-        if not path.endswith(NORMALIZE_EXTS):
+        if not path:
             return
 
-        settings = self._load_settings()
+        # 1) Resolve settings with correct precedence:
+        # defaults -> profile baseline -> user settings (user wins)
+        settings = self._resolve_settings(path)
+
+        # 2) Determine which extensions trigger; user can override
+        exts = settings.get("file_extensions")
+        if exts:
+            exts = tuple(e.lower() for e in exts)
+        else:
+            exts = NORMALIZE_EXTS_DEFAULT
+
+        if not path.endswith(exts):
+            return
+
         region = sublime.Region(0, view.size())
         text = view.substr(region)
         changed = False
@@ -73,13 +107,23 @@ class NormalizeOnSave(sublime_plugin.EventListener):
         if changed:
             view.run_command("normalize_on_save_apply", {"text": text})
 
-    def _load_settings(self):
+    def _resolve_settings(self, path_lower):
+        # start with defaults
+        merged = dict(DEFAULT_SETTINGS)
+
+        # apply profile baseline (if any)
+        for exts, profile in EXTENSION_PROFILES.items():
+            if any(path_lower.endswith(ext) for ext in exts):
+                merged.update(profile)
+                break
+
+        # finally, apply user settings (user wins)
         s = sublime.load_settings("normalize_on_save.sublime-settings")
-        data = dict(DEFAULT_SETTINGS)
-        for key in data:
-            if s.has(key):
-                data[key] = s.get(key)
-        return data
+        for k in DEFAULT_SETTINGS.keys() | {"file_extensions"}:
+            if s.has(k):
+                merged[k] = s.get(k)
+
+        return merged
 
 # -------------------------------------------------------------------
 class NormalizeOnSaveApplyCommand(sublime_plugin.TextCommand):
