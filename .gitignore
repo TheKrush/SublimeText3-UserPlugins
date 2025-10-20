@@ -94,9 +94,7 @@ docs/_build/
 # ------------------------
 # 🔹 Repo-specific (Sublime Text setup)
 # ------------------------
-Default (Windows).sublime-keymap
-Package Control.sublime-settings
-Preferences.sublime-settings
+User/
 
 # ------------------------
 # 🔹 Project-specific
