@@ -35,7 +35,7 @@ SPACE_FIX = re.compile(r"[ \t]{2,}")
 DEFAULT_SETTINGS = {
     "flatten_pretty_punctuation": False,
     "strip_invisible_chars": True,
-    "normalize_spacing": True,
+    "normalize_spacing": False,
     "debug_log": False,
 }
 
@@ -44,7 +44,7 @@ EXTENSION_PROFILES = {
      ".ini", ".cfg", ".json", ".xml", ".html", ".css", ".sh"): {
         "flatten_pretty_punctuation": True,
         "strip_invisible_chars": True,
-        "normalize_spacing": True,
+        "normalize_spacing": False,
     },
     (".md", ".txt", ".story", ".wiki"): {
         "flatten_pretty_punctuation": False,
