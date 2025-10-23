@@ -2,6 +2,7 @@ import sublime
 import sublime_plugin
 import re
 import os
+import unicodedata
 
 # --- Fallback file types if no "file_extensions" provided -----------
 NORMALIZE_EXTS_DEFAULT = (".txt", ".md", ".rst", ".html", ".story", ".wiki",
@@ -32,10 +33,54 @@ REPLACEMENTS_PRETTY = [
 
 SPACE_FIX = re.compile(r"[ \t]{2,}")
 
+# Ranges covering most emoji/pictographs
+EMOJI_RANGES = [
+    (0x1F300, 0x1F6FF),  # Misc Symbols and Pictographs
+    (0x1F900, 0x1F9FF),  # Supplemental Symbols and Pictographs
+    (0x1FA70, 0x1FAFF),  # Symbols and Pictographs Extended-A
+    (0x2600,  0x26FF),   # Misc symbols
+    (0x2700,  0x27BF),   # Dingbats
+    (0x1F1E6, 0x1F1FF),  # Flags (regional indicators)
+]
+
+def remove_emojis(text):
+    result = []
+    skip_next_space = False
+
+    for ch in text:
+        cp = ord(ch)
+
+        # --- If last char was emoji, skip a single following space or tab ---
+        if skip_next_space:
+            if ch in (" ", "\t"):
+                skip_next_space = False
+                continue
+            skip_next_space = False  # reset if not whitespace
+
+        # --- Emoji ranges ---
+        if any(start <= cp <= end for start, end in EMOJI_RANGES):
+            skip_next_space = True
+            continue
+
+        # --- Variation selectors (emoji styling) ---
+        if cp in (0xFE0F, 0xFE0E):  # VS16, VS15
+            skip_next_space = True
+            continue
+
+        # --- Misc symbolic extras ---
+        if unicodedata.category(ch) in ("So", "Sk") and cp > 10000:
+            skip_next_space = True
+            continue
+
+        result.append(ch)
+
+    return "".join(result)
+
 DEFAULT_SETTINGS = {
     "flatten_pretty_punctuation": False,
     "strip_invisible_chars": True,
     "normalize_spacing": False,
+    "strip_emoji": False,
     "debug_log": False,
 }
 
@@ -45,11 +90,13 @@ EXTENSION_PROFILES = {
         "flatten_pretty_punctuation": True,
         "strip_invisible_chars": True,
         "normalize_spacing": False,
+        "strip_emoji": True,
     },
     (".md", ".txt", ".story", ".wiki"): {
         "flatten_pretty_punctuation": False,
         "strip_invisible_chars": True,
         "normalize_spacing": True,
+        "strip_emoji": False,
     },
 }
 
@@ -86,6 +133,9 @@ class NormalizeOnSave(sublime_plugin.EventListener):
         if settings.get("flatten_pretty_punctuation", False):
             for old, new in REPLACEMENTS_PRETTY:
                 text = text.replace(old, new)
+
+        if settings.get("strip_emoji", False):
+            text = remove_emojis(text)
 
         if settings.get("normalize_spacing", True):
             text = SPACE_FIX.sub(" ", text)
