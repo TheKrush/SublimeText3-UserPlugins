@@ -40,8 +40,9 @@ EMOJI_RANGES = [
     (0x1FA70, 0x1FAFF),  # Symbols and Pictographs Extended-A
     (0x2600,  0x26FF),   # Misc symbols
     (0x2700,  0x27BF),   # Dingbats
-    (0x2300,  0x23FF),   # ⏩ etc. — Misc Technical
-    (0x1F1E6, 0x1F1FF),  # Flags (regional indicators)
+    (0x2300,  0x23FF),   # Misc Technical (⏩ etc.)
+    (0x1F1E6, 0x1F1FF),  # Flags
+    (0x20E3,  0x20E3),   # Keycap combining mark
 ]
 
 def remove_emojis(text):
@@ -51,31 +52,32 @@ def remove_emojis(text):
     for ch in text:
         cp = ord(ch)
 
-        # --- If last char was emoji, skip a single following space or tab ---
+        # Skip one whitespace after emoji
         if skip_next_space:
             if ch in (" ", "\t"):
                 skip_next_space = False
                 continue
-            skip_next_space = False  # reset if not whitespace
+            skip_next_space = False
 
-        # --- Emoji ranges ---
+        # --- Keycaps / emoji modifiers ---
         if any(start <= cp <= end for start, end in EMOJI_RANGES):
             skip_next_space = True
             continue
 
-        # --- Variation selectors (emoji styling) ---
-        if cp in (0xFE0F, 0xFE0E):  # VS16, VS15
+        # --- Variation selectors / zero-width joiners ---
+        if cp in (0xFE0F, 0xFE0E, 0x200D):  # VS16, VS15, ZWJ
             skip_next_space = True
             continue
 
-        # --- Misc symbolic extras ---
-        if unicodedata.category(ch) in ("So", "Sk") and cp > 10000:
+        # --- Misc “symbol” leftovers ---
+        if unicodedata.category(ch) in ("So", "Sk") and cp > 9999:
             skip_next_space = True
             continue
 
         result.append(ch)
 
     return "".join(result)
+
 
 DEFAULT_SETTINGS = {
     "flatten_pretty_punctuation": False,
@@ -108,13 +110,14 @@ class NormalizeOnSave(sublime_plugin.EventListener):
         if not path:
             return
 
-        # 🛑 Skip this plugin’s own file to avoid clobbering itself
+        # Skip this plugin’s own file to avoid clobbering itself
         if "normalize_on_save.py" in path.replace("\\", "/"):
             return
 
-        settings = self._resolve_settings(view, path)
+        path_lower = (view.file_name() or "").lower()
+        settings = self._resolve_settings(view, path_lower)
         exts = tuple(settings.get("file_extensions", NORMALIZE_EXTS_DEFAULT))
-        if not path.endswith(exts):
+        if not path_lower.endswith(exts):
             return
 
         full = sublime.Region(0, view.size())
@@ -148,27 +151,28 @@ class NormalizeOnSave(sublime_plugin.EventListener):
         elif settings.get("debug_log", False):
             print("[NormalizeOnSave] No changes for:", os.path.basename(path))
 
-    def _resolve_settings(self, view, path_lower):
+    def _resolve_settings(self, view, path):
         merged = dict(DEFAULT_SETTINGS)
+        path_lower = path.lower()
 
-        # Apply baseline profile
-        for exts, profile in EXTENSION_PROFILES.items():
-            if any(path_lower.endswith(ext) for ext in exts):
-                merged.update(profile)
-                break
-
-        # Load user/global settings
+        # Global settings first
         s = sublime.load_settings("normalize_on_save.sublime-settings")
         for k in DEFAULT_SETTINGS.keys() | {"file_extensions"}:
             if s.has(k):
                 merged[k] = s.get(k)
 
-        # ✅ Merge per-project or per-view overrides
+        # Project/view overrides next
         vs = view.settings()
         for k in DEFAULT_SETTINGS.keys() | {"file_extensions"}:
             prefixed = "normalize_on_save." + k
             if vs.has(prefixed):
                 merged[k] = vs.get(prefixed)
+
+        # Plugin’s hardcoded extension profile LAST → highest priority
+        for exts, profile in EXTENSION_PROFILES.items():
+            if any(path_lower.endswith(ext) for ext in exts):
+                merged.update(profile)
+                break
 
         return merged
 
