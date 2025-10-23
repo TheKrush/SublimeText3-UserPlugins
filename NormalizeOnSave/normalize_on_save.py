@@ -40,6 +40,7 @@ EMOJI_RANGES = [
     (0x1FA70, 0x1FAFF),  # Symbols and Pictographs Extended-A
     (0x2600,  0x26FF),   # Misc symbols
     (0x2700,  0x27BF),   # Dingbats
+    (0x2300,  0x23FF),   # ⏩ etc. — Misc Technical
     (0x1F1E6, 0x1F1FF),  # Flags (regional indicators)
 ]
 
