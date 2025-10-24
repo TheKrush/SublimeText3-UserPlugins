@@ -56,6 +56,34 @@ REPLACEMENTS_PRETTY = [
 
 SPACE_FIX = re.compile(r"[ \t]{2,}")
 
+def normalize_spacing(text):
+    """
+    Collapse excessive spaces/tabs in normal text, but preserve spacing
+    inside Markdown code blocks (``` ... ```) and tables (| ... |).
+    """
+    result = []
+    in_code_block = False
+
+    for line in text.splitlines(True):  # keep line endings
+        stripped = line.strip()
+
+        # Toggle state for fenced code blocks
+        if stripped.startswith("```"):
+            in_code_block = not in_code_block
+            result.append(line)
+            continue
+
+        # Skip normalization for code or tables
+        if in_code_block or stripped.startswith("|"):
+            result.append(line)
+            continue
+
+        # Collapse multiple spaces/tabs elsewhere
+        result.append(SPACE_FIX.sub(" ", line))
+
+    return "".join(result)
+
+
 # Ranges covering most emoji/pictographs
 EMOJI_RANGES = [
     (0x1F300, 0x1F6FF),  # Misc Symbols and Pictographs
@@ -165,7 +193,7 @@ class NormalizeOnSave(sublime_plugin.EventListener):
             text = remove_emojis(text)
 
         if settings.get("normalize_spacing", True):
-            text = SPACE_FIX.sub(" ", text)
+            text = normalize_spacing(text)
 
         if text != original:
             view.run_command("normalize_on_save_apply", {"text": text})
