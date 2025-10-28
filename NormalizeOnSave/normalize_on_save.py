@@ -86,13 +86,23 @@ def normalize_spacing(text):
 
 # Ranges covering most emoji/pictographs
 EMOJI_RANGES = [
-    (0x1F300, 0x1F6FF),  # Misc Symbols and Pictographs
+    (0x1F300, 0x1F5FF),  # Misc Symbols and Pictographs (weather, food, etc.)
+    (0x1F600, 0x1F64F),  # Emoticons (faces)
+    (0x1F680, 0x1F6FF),  # Transport and Map symbols
+    (0x1F700, 0x1F77F),  # Alchemical symbols
+    (0x1F780, 0x1F7FF),  # Geometric Shapes Extended (🟠🟡🟢🔵🟣🟤⚫⚪)
+    (0x1F800, 0x1F8FF),  # Supplemental Arrows-C
     (0x1F900, 0x1F9FF),  # Supplemental Symbols and Pictographs
+    (0x1FA00, 0x1FA6F),  # Chess, dice, game symbols
     (0x1FA70, 0x1FAFF),  # Symbols and Pictographs Extended-A
-    (0x2600,  0x26FF),   # Misc symbols
-    (0x2700,  0x27BF),   # Dingbats
+    (0x1FB00, 0x1FBFF),  # Symbols for Legacy Computing
+    (0x2600,  0x26FF),   # Misc symbols (⚙️☀️)
+    (0x2700,  0x27BF),   # Dingbats (✂️✈️)
     (0x2300,  0x23FF),   # Misc Technical (⏩ etc.)
-    (0x1F1E6, 0x1F1FF),  # Flags
+    (0x2190,  0x21FF),   # Arrows (← → ↑ ↓ ↔)
+    (0x2900,  0x297F),   # Supplemental Arrows-B
+    (0x2B00,  0x2BFF),   # Miscellaneous Symbols and Arrows
+    (0x1F1E6, 0x1F1FF),  # Flags (regional indicators)
     (0x20E3,  0x20E3),   # Keycap combining mark
 ]
 
