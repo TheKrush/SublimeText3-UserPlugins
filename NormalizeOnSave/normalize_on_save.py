@@ -59,7 +59,7 @@ SPACE_FIX = re.compile(r"[ \t]{2,}")
 def normalize_spacing(text):
     """
     Collapse excessive spaces/tabs in normal text, but preserve spacing
-    inside Markdown code blocks (``` ... ```) and tables (| ... |).
+    inside Markdown code blocks, tables, indented lines, or list items.
     """
     result = []
     in_code_block = False
@@ -67,18 +67,29 @@ def normalize_spacing(text):
     for line in text.splitlines(True):  # keep line endings
         stripped = line.strip()
 
-        # Toggle state for fenced code blocks
+        # Toggle for fenced code blocks
         if stripped.startswith("```"):
             in_code_block = not in_code_block
             result.append(line)
             continue
 
-        # Skip normalization for code or tables
-        if in_code_block or stripped.startswith("|"):
+        # skip normalization for:
+        # - code block lines
+        # - tables (| ... |)
+        # - indented lines (> or leading 2+ spaces)
+        # - markdown lists (*, -, +, or numbered)
+        if (
+            in_code_block
+            or stripped.startswith("|")
+            or line.startswith("  ")
+            or stripped.startswith(">")  # blockquotes
+            or stripped.startswith(("-", "*", "+"))
+            or stripped[:2].isdigit() and stripped[2:].startswith(".")
+        ):
             result.append(line)
             continue
 
-        # Collapse multiple spaces/tabs elsewhere
+        # collapse spaces elsewhere
         result.append(SPACE_FIX.sub(" ", line))
 
     return "".join(result)
