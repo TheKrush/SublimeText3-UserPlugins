@@ -107,6 +107,7 @@ EMOJI_RANGES = [
     (0x1FA00, 0x1FA6F),  # Chess, dice, game symbols
     (0x1FA70, 0x1FAFF),  # Symbols and Pictographs Extended-A
     (0x1FB00, 0x1FBFF),  # Symbols for Legacy Computing
+    (0x2100,  0x214F),   # Letterlike Symbols (ℹ, ℗, ℞, ℠, ℤ, etc.)
     (0x2600,  0x26FF),   # Misc symbols (⚙️☀️)
     (0x2700,  0x27BF),   # Dingbats (✂️✈️)
     (0x2300,  0x23FF),   # Misc Technical (⏩ etc.)
